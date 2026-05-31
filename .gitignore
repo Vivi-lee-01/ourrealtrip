@@ -43,3 +43,6 @@ dist/
 /ggui.alpha3.bak/
 # env 백업 변형(이미 .env.* 로 잡히나 명시)
 .env*.bak*
+# OMC 로컬 에이전트 상태 / 테스트 산출물 (제품 repo에 불필요)
+.omc/
+/test-results/
