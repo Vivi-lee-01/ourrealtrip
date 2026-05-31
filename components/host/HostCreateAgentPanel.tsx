@@ -251,6 +251,15 @@ export default function HostCreateAgentPanel({
   const [proposed, setProposed] = useState<HostCreateAgentPayload | null>(null);
   const historyRef = useRef<HTMLDivElement | null>(null);
 
+  // ── 웹 모드(공개 배포) ──
+  // GGUI 백엔드(localhost:6790)는 공개 HTTPS 사이트에서 닿지 않는다(mixed-content/미기동).
+  // conn === "offline" 이면 GGUI 대신 same-origin /api/agent(서버사이드 Claude)로 초안을 만든다.
+  const webMode = conn === "offline";
+  const [webMsgs, setWebMsgs] = useState<
+    Array<{ role: "user" | "assistant"; text: string }>
+  >([]);
+  const [webBusy, setWebBusy] = useState(false);
+
   // 에이전트가 host_create_apply 툴을 호출하면 그 인자를 구조화 payload 로 추출.
   // entries 를 역순으로 훑어 가장 최근 호출 1건만 본다.
   useEffect(() => {
@@ -290,7 +299,54 @@ export default function HostCreateAgentPanel({
   //   버튼 onClick / Enter 로 직접 send 한다.
   function submitPrompt() {
     const text = prompt.trim();
-    if (!text || sending) return;
+    if (!text) return;
+
+    // 웹 모드: GGUI 백엔드 대신 /api/agent(서버사이드 Claude)로 초안 생성
+    if (webMode) {
+      if (webBusy) return;
+      setPrompt("");
+      setWebMsgs((m) => [...m, { role: "user", text }]);
+      setWebBusy(true);
+      void fetch("/api/agent", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ prompt: text }),
+      })
+        .then(async (r) => {
+          const d = (await r.json()) as {
+            summary?: string;
+            payload?: unknown;
+            error?: string;
+          };
+          if (d.error) {
+            setWebMsgs((m) => [
+              ...m,
+              { role: "assistant", text: `(오류) ${d.error}` },
+            ]);
+            return;
+          }
+          setWebMsgs((m) => [
+            ...m,
+            { role: "assistant", text: d.summary ?? "초안을 만들었어요." },
+          ]);
+          const p = validateAgentPayload(d.payload);
+          if (!isPayloadEmpty(p)) setProposed(p);
+        })
+        .catch((err) => {
+          setWebMsgs((m) => [
+            ...m,
+            {
+              role: "assistant",
+              text: `(오류) ${err instanceof Error ? err.message : String(err)}`,
+            },
+          ]);
+        })
+        .finally(() => setWebBusy(false));
+      return;
+    }
+
+    // GGUI 모드
+    if (sending) return;
     setPrompt("");
     // send 실패(백엔드 down 등)는 hook 내부에서 error 엔트리로 떨어진다
     void Promise.resolve(send(text)).catch(() => {});
@@ -343,36 +399,32 @@ export default function HostCreateAgentPanel({
             aria-hidden
             className={cx(
               "inline-block h-1.5 w-1.5 rounded-full",
-              conn === "connected"
+              conn === "connected" || conn === "offline"
                 ? "bg-success"
-                : conn === "connecting"
-                  ? "bg-warn"
-                  : "bg-surface-borderStrong",
+                : "bg-warn",
             )}
           />
           {conn === "connected"
             ? "에이전트 연결됨"
             : conn === "connecting"
               ? "에이전트 연결 중…"
-              : "에이전트 오프라인"}
+              : "Claude 직접 연결 (웹)"}
         </span>
       </div>
 
       {/* 오프라인 안내 + 개발 검증 유틸 */}
-      {conn === "offline" && (
-        <div className="mb-4 space-y-2 rounded-xl border border-surface-border bg-surface-soft p-3">
+      {webMode && webMsgs.length === 0 && (
+        <div className="mb-4 space-y-2 rounded-xl border border-brand-soft bg-brand-soft/40 p-3">
           <p className="text-label text-ink-muted">
-            에이전트 백엔드에 연결되지 않았습니다{connError ? ` (${connError})` : ""}.
-            <br />
-            <code className="text-caption">ggui/servers</code> 의 agent(6790)·ggui(6781)를
-            키와 함께 기동하면 실시간 작업대가 활성화됩니다.
+            원하는 이벤트를 아래에 적어보세요. 제목·소개·일정·연결 상품·안전 문구가 담긴
+            초안을 만들어 드려요. 확인 후 “페이지에 반영”을 누르면 왼쪽 폼이 채워집니다.
           </p>
           <button
             type="button"
             onClick={() => setProposed(MOCK_PAYLOAD)}
             className="rounded-lg border border-surface-border bg-surface px-3 py-2 text-caption font-medium text-ink hover:bg-surface-soft"
           >
-            구조화 제안 미리보기(개발용)
+            예시 초안 보기
           </button>
         </div>
       )}
@@ -406,6 +458,27 @@ export default function HostCreateAgentPanel({
           // (채팅 로그는 append-only라 index 사용이 안전)
           <ChatEntryView key={`${entry.id}_${i}`} entry={entry} />
         ))}
+
+        {/* 웹 모드 대화 로그 (/api/agent) */}
+        {webMode &&
+          webMsgs.map((m, i) => (
+            <div
+              key={`web_${i}`}
+              className={
+                m.role === "user"
+                  ? "ml-auto max-w-full whitespace-pre-wrap rounded-xl bg-surface-sunken px-3 py-2 text-body-sm leading-6 text-ink"
+                  : "max-w-full rounded-xl bg-surface px-3 py-2 text-body-sm leading-6 text-ink"
+              }
+            >
+              {m.role === "assistant" ? <MarkdownText text={m.text} /> : m.text}
+            </div>
+          ))}
+        {webMode && webBusy && (
+          <div className="px-3 py-2 text-caption text-ink-faint">
+            에이전트가 초안을 작성하고 있어요…
+          </div>
+        )}
+
         {sandboxUrl && topRender && (
           <RenderFrame
             render={topRender}
@@ -453,9 +526,9 @@ export default function HostCreateAgentPanel({
               onChange={(e) => setPrompt(e.target.value)}
               onKeyDown={onKeyDown}
               rows={4}
-              disabled={sending}
+              disabled={sending || webBusy}
               className="w-full resize-y border-0 bg-transparent text-body leading-7 text-ink placeholder:text-ink-faint focus-visible:outline-none"
-              placeholder="이 초안에 대해 질문하거나, 바꾸고 싶은 방향을 적어주세요."
+              placeholder="원하는 이벤트를 적어주세요. 예: 서울에서 하는 3:3 랜덤 매칭 모임"
             />
             <div className="mt-2 flex items-center justify-between gap-3">
               <span className="text-caption text-ink-faint">
@@ -464,10 +537,11 @@ export default function HostCreateAgentPanel({
               <button
                 type="button"
                 onClick={sending ? abort : submitPrompt}
+                disabled={webBusy}
                 aria-label={sending ? "중지" : "보내기"}
-                className="grid h-11 w-11 place-items-center rounded-full bg-ink text-xl leading-none text-surface transition hover:opacity-90"
+                className="grid h-11 w-11 place-items-center rounded-full bg-ink text-xl leading-none text-surface transition hover:opacity-90 disabled:opacity-50"
               >
-                {sending ? "■" : "↑"}
+                {sending || webBusy ? "…" : "↑"}
               </button>
             </div>
           </div>

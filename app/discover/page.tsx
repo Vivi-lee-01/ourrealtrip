@@ -114,14 +114,33 @@ export default async function DiscoverPage() {
       </div>
 
       <main className="mx-auto w-full max-w-discover px-4 py-8 sm:px-6 sm:py-12">
-        {/* 1. 인트로(Hero) — 흰 캔버스 위 절제된 28px/700 ink 헤드라인. 사진 그리드가 시각 무게를 짊어진다(Airbnb 원칙) */}
-        <header className="mb-10">
-          <h1 className="text-display text-ink">
-            당신의 콘텐츠가 여행이 됩니다.
+        {/* 1. 인트로(Hero) — 따뜻한 코랄 그라데이션 캔버스 + 강조 헤드라인 + CTA.
+            무채색 완화 + 시선 고정점 부여(브랜드 Rausch 단일 액센트, 키워드 1개만 코랄). */}
+        <header className="mb-12 overflow-hidden rounded-xl bg-gradient-to-br from-brand-soft to-surface px-6 py-12 ring-1 ring-brand-soft sm:px-10 sm:py-16">
+          <span className="inline-flex items-center gap-1.5 rounded-pill bg-brand-soft px-3 py-1 text-label font-semibold text-brand-softfg">
+            <span aria-hidden className="inline-block size-1.5 rounded-pill bg-brand" />
+            스토리가 있는 여행
+          </span>
+          <h1 className="mt-4 text-display font-bold text-ink sm:text-[2.5rem] sm:leading-[1.15]">
+            당신의 콘텐츠가 <span className="text-brand">여행</span>이 됩니다.
           </h1>
           <p className="mt-3 max-w-content text-body text-ink-body">
             취향과 스토리가 더해진 여행 프로그램, 어때요? 함께 가실래요?
           </p>
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <Link
+              href="/host/create"
+              className="rounded-pill bg-brand px-6 py-3 text-label font-semibold text-brand-fg shadow-sm transition hover:bg-brand-hover"
+            >
+              이벤트 만들기
+            </Link>
+            <Link
+              href="#discover-trips"
+              className="rounded-pill border border-surface-borderStrong bg-surface px-6 py-3 text-label font-semibold text-ink transition hover:bg-surface-soft"
+            >
+              둘러보기
+            </Link>
+          </div>
         </header>
 
         {/* 2. Browse by Category — pill chip 레일 */}
@@ -229,7 +248,7 @@ export default async function DiscoverPage() {
                 key={step.no}
                 className="rounded-md border border-surface-border bg-surface p-5"
               >
-                <span className="text-h3 font-bold tabular-nums text-ink-faint">
+                <span className="text-h3 font-bold tabular-nums text-brand">
                   {step.no}
                 </span>
                 <h3 className="mt-3 text-body font-bold text-ink">
