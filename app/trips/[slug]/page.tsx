@@ -12,6 +12,8 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
+import AppTopNav from "@/components/AppTopNav";
+import { getHostAuthContext } from "@/lib/auth/host";
 import CoverHero from "@/components/proposal/CoverHero";
 import HostLedTrust from "@/components/proposal/HostLedTrust";
 import RsvpPanel from "@/components/proposal/RsvpPanel";
@@ -87,6 +89,9 @@ export default async function TripProposalPage({ params }: PageProps) {
   const proposal: TripProposalDetail | null = getProposalBySlug(slug);
   if (!proposal) notFound();
 
+  // 전역 상단 네비용 인증 컨텍스트 (로고=홈 링크 + 로그인/프로필)
+  const user = await getHostAuthContext();
+
   const itinerary = getItinerary(proposal.proposal_id);
 
   // ── 참여/진행 집계 (로컬 store, .data 없으면 빈 폴백) ──
@@ -156,7 +161,9 @@ export default async function TripProposalPage({ params }: PageProps) {
   }));
 
   return (
-    <main className="container-content space-y-8 py-6 sm:space-y-10 sm:py-8">
+    <>
+      <AppTopNav user={user} />
+      <main className="container-content space-y-8 py-6 sm:space-y-10 sm:py-8">
       {/* 1. CoverHero */}
       <CoverHero proposal={proposal} />
 
@@ -200,6 +207,7 @@ export default async function TripProposalPage({ params }: PageProps) {
       {/* 12. ShareCta + 필수 고지 7종 */}
       <ShareCta title={proposal.title} shareText={shareText} url={shareUrl} />
       <DisclosureBanner variant="collapsed" />
-    </main>
+      </main>
+    </>
   );
 }
