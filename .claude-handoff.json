@@ -1,0 +1,107 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-05-31T10:47:34+09:00",
+  "repo": "ourrealtrip",
+  "branch": "(not a git repo)",
+  "latest_work_2026_05_31_pm": {
+    "summary": "Host create 스크롤 버그 브라우저 검증 완료 + Google 로그인 UI/프로필 노출 추가 + Supabase 오프로젝트 삭제 + dev chunk 꼬임 복구",
+    "artifacts": [
+      "docs/superpowers/specs/2026-05-31-ourrealtrip-host-create-mcp-design.md (설계, §11=스크롤버그)",
+      "docs/superpowers/specs/2026-05-31-ourrealtrip-host-create-mcp-plan.md (단계별 구현계획 G0~P5)",
+      "components/host/HostCreateAgentPanel.tsx (스크롤 fix 적용)",
+      "components/AppTopNav.tsx (Luma식 상단 nav + 로그인 사용자 표시)",
+      "components/auth/GoogleLoginButton.tsx, app/login/page.tsx, middleware.ts, lib/auth/host.ts, lib/supabase/* (Google/Supabase auth 흐름)"
+    ],
+    "mcp_decisions": {
+      "D1": "구조화된 MCP 툴 (대화형 릴레이 아님)",
+      "D2": "가입자 개인 에이전트(헤르메스 등)가 호스트-create 능력 위임 호출",
+      "D3": "인증=구글 로그인(미구현) 후 발급 PAT",
+      "D4": "기반=ggui/servers/mcps/host-create(6783) echo-only 스캐폴드 확장",
+      "D5": "전송=원격 Streamable HTTP + Bearer 토큰",
+      "D6": "이번 스텝=호스트(쓰기) 전용, 게스트 읽기는 별도",
+      "D7": "에이전트가 draft~publish 전부. 승인 UX는 클라이언트 에이전트 책임, 서버는 publish 스코프=위임증명으로 강제",
+      "star": "공유 도메인 서비스 레이어(lib/host-create) 추출이 핵심 작업량 — 웹·MCP drift 방지. plan.md P1"
+    },
+    "scroll_fix": {
+      "file": "components/host/HostCreateAgentPanel.tsx",
+      "what": "패널 루트 lg:sticky lg:top-4 lg:h-[calc(100vh-6rem)] lg:min-h-0; 추천질문+대화로그+제안카드+안전점검을 단일 내부 스크롤 컨테이너로 묶고 min-h-0 부여",
+      "root_cause": "flex 자식 min-height:auto 기본값 + 패널 높이상한 부재로 overflow-y-auto가 패널 내부에서 발동하지 않고 grid/body 높이를 계속 늘림",
+      "status": "브라우저 검증 완료",
+      "verified": "localhost:3000/host/create에서 대화를 쌓아도 body가 무한히 늘지 않고 우측 패널 내부 스크롤로 동작 확인. 390px 모바일 폭도 horizontalOverflow=false 확인.",
+      "note": "다음 세션에서 다시 깨지면 lg:h-[calc(100vh-6rem)] 또는 lg:sticky/top 값만 조정."
+    },
+    "next_priority": [
+      "(1) 다음 세션 시작 시 /Users/vivi/ourrealtrip/.claude-handoff.json의 latest_work_2026_05_31_pm 먼저 확인",
+      "(2) MCP 기능은 docs/superpowers/specs/2026-05-31-ourrealtrip-host-create-mcp-plan.md의 G0 전제 해소부터. 설계 근거는 같은 폴더의 ...-mcp-design.md.",
+      "(3) 구글 로그인은 로컬에서 OAuth 이동까지 확인됨. 실제 세션 완료/콜백까지 이어갈지, MCP 선행 G0 조사만 할지 먼저 결정.",
+      "(4) build 검증 시 dev 서버를 끄고 rm -rf .next 후 npm run build. 이후 dev 재시작 필요."
+    ],
+    "auth_and_nav_2026_05_31_am": {
+      "what": "/host/create, /host/preview/[draftId], /e/[slug] 상단에 Luma식 AppTopNav 추가. 로그인 상태면 Google metadata avatar_url/picture와 name/full_name 표시. 비로그인 상태면 로그인 링크.",
+      "files": [
+        "components/AppTopNav.tsx",
+        "lib/auth/host.ts",
+        "app/host/create/page.tsx",
+        "app/host/preview/[draftId]/page.tsx",
+        "app/e/[slug]/page.tsx",
+        "app/login/page.tsx",
+        "components/auth/GoogleLoginButton.tsx",
+        "middleware.ts",
+        "lib/supabase/client.ts",
+        "lib/supabase/server.ts",
+        "lib/supabase/middleware.ts",
+        "lib/supabase/config.ts"
+      ],
+      "behavior": "/host/create는 Supabase 세션이 없으면 /login?next=/host/create 로 redirect. Google로 계속하기는 Supabase OAuth -> Google Accounts로 이동.",
+      "verified": "CSS/JS 정상 상태에서 /login?next=%2Fhost%2Fcreate 200, layout.css 200, app/login/page.js 200, Google OAuth 이동 확인."
+    },
+    "supabase_cleanup": {
+      "deleted_wrong_project": "futureschole-ai-all org의 잘못 생성된 ourrealtrip project ref=lnikmvxmfajzelbwfrcm 삭제 완료(supabase projects delete ... --yes).",
+      "kept_correct_project": "Vivi 개인 org project ref=ehzivxtzlxcrhbgjqrfu 유지. .env.local/Supabase link도 이 ref 기준."
+    },
+    "dev_server_state": {
+      "current": "proc_1ad67d42cade 실행 중: rm -rf .next && npm run dev, localhost:3000",
+      "old": "proc_aca891d7f89d는 dev chunk/CSS 꼬임 복구를 위해 SIGTERM 종료됨(exit -15).",
+      "important": "Next dev 중 npm run build를 돌리면 .next dev static chunk/CSS가 꼬여 login 화면이 unstyled가 되고 버튼 hydration이 안 될 수 있음. 증상: /_next/static/css/app/layout.css 및 app/login/page.js 404. 복구: dev 종료 → rm -rf .next → npm run dev 재시작 → CSS/JS 200 확인."
+    }
+  },
+  "git_state": {
+    "uncommitted_files": [],
+    "last_commit_hash": "(n/a — not a git repo)",
+    "last_commit_message": "(n/a)"
+  },
+  "summary": {
+    "what_we_were_doing": "OurRealTrip(/Users/vivi/ourrealtrip, Next15/React19) 호스트 이벤트-create에 GGUI(@ggui-ai/react)×Luma UX P0~P2 구현·라이브검증 완료. 다음 세션은 게스트(신청자) 노출 페이지 + 파일럿 상세 + 갤러리 UI + 이벤트만들기 탭 + 구글 로그인 + 역할(호스트/게스트) 신규 구현.",
+    "key_decisions": [
+      "실제 @ggui-ai/react(0.2.0-alpha.4) 직접 통합 — Vivi 선택(네이티브 대체 아님). 우패널 HostCreateAgentPanel이 useMcpAppsChat+AppRenderer로 라이브 agent(localhost:6790)와 대화. 라이브 auth는 ggui/.env.local의 CLAUDE_CODE_OAUTH_TOKEN(절대 출력/커밋 금지).",
+      "커버 이미지 = LLM 전사에 의존 말 것 — LLM이 cover_image_url을 2회 안 채움. 해결: searchTnas 툴 결과(실제 MyRealTrip CDN 사진)가 이미 채팅 entries에 있어 클라이언트가 정규식으로 직접 추출(extractTnaImageFromEntries)해 주입. 교훈: 데이터가 이미 있는 곳에서 읽어라.",
+      "host_recommend_products(샘플 스텁, 이미지 없음) 제거 — 에이전트가 자꾸 이걸 집어 searchTnas 회피. allowlist에서 빼도 서버가 advertise하면 LLM이 봄 → handlers.ts에서 툴 등록 삭제+서버 재기동해야 사라짐.",
+      "마크다운: 채팅 로그=렌더(Markdown.tsx), 폼 필드(제목/컨셉/소개)+제안카드=strip(markdown.ts). textarea는 평문이라 strip. 표/hr 포함.",
+      "공개/비공개 2-way(EventAudience), 단일/여러날 토글 제거(시작·종료일 자동추론), 시간대 37개(presets.ts TIMEZONE_OPTIONS).",
+      "merchant 아님: price_hint 표시만, 결제 필드 0, externally_confirmed UI 세팅 금지, 발행/booking_open은 사람 승인. host_create_apply는 draft 제안만.",
+      "SYSTEM_PROMPT(ggui/.env.local)는 dotenv-cli 기동시 주입+in-code dotenv non-override라 변경 시 전체 pnpm dev 재기동 필요(touch/tsx-watch로는 신규 var만 픽업)."
+    ],
+    "current_blockers": [
+      "큰 기능 블로커 없음. /host/create 스크롤 버그는 브라우저 검증 완료.",
+      "Google 로그인은 버튼 클릭 시 OAuth 화면 이동까지 확인. 실제 Google 계정 선택 후 callback 세션 확정은 다음 세션에서 필요하면 이어서 검증.",
+      "Next dev와 npm run build를 같은 .next에서 섞으면 static chunk/CSS 404가 발생할 수 있음. build 전 dev 종료, build 후 .next 삭제+dev 재시작 권장."
+    ],
+    "next_steps": [
+      "MCP 기능: docs/superpowers/specs/2026-05-31-ourrealtrip-host-create-mcp-plan.md의 G0 전제 해소부터 진행. 설계는 ...-mcp-design.md 참조.",
+      "구글 로그인 실제 세션 완료/콜백 검증을 먼저 할지, MCP 선행 G0 조사만 할지 선택.",
+      "이후 P1 공유 도메인 서비스 레이어(lib/host-create) 추출 → 웹/MCP drift 방지.",
+      "계속 개발 전 localhost:3000 상태 확인: /login, CSS, login JS 200 확인."
+    ],
+    "files_touched": [
+      "components/host/HostCreateAgentPanel.tsx (GGUI 통합+커버추출+마크다운렌더+제안카드)",
+      "components/host/CreateEventForm.tsx (좌패널 폼, applyPayload strip, P1/P2 UI)",
+      "components/host/Markdown.tsx (채팅 마크다운 렌더러)",
+      "components/host/ReactQueryProvider.tsx, components/host/GuidanceCopy.tsx",
+      "lib/host-create/agentPayload.ts(validator), safetyCheck.ts, presets.ts(공개/커뮤니티/커버/분위기/장소/시간대), markdown.ts(stripMarkdown)",
+      "app/host/create/{page.tsx,actions.ts}, app/host/preview/[draftId]/page.tsx, app/e/[slug]/page.tsx, components/event/RegisterBox.tsx",
+      "lib/store/drafts.ts, lib/types.ts, next.config.ts(transpilePackages)",
+      "ggui/servers/mcps/host-create/* (MCP: host_create_apply, host_safety_check), ggui/servers/agent/src/agent.ts(allowlist+HOST_CREATE_SYSTEM_PROMPT), ggui/.env.local(+.bak,.bak2,.bak3)"
+    ],
+    "important_context": "실행: 본체 Next는 cd ~/ourrealtrip && npm run dev → localhost:3000. ggui 스택은 cd ~/ourrealtrip/ggui && pnpm dev --verbose (scripts/dev.mjs가 ggui:6781/todo:6782/agent:6790 묶어 spawn; child 1개 exit시 stops-others=kill-others). host-create MCP(6783)는 dev.mjs 밖 별도: pnpm --filter @ggui/mcp-host-create start. 에이전트 MCP: ggui/todo/myrealtrip(실서버 mcp-servers.myrealtrip.com/mcp)/host_create. searchTnas는 실상품+CDN이미지(dry7pvlp22cox.cloudfront.net/mrt-images-prod) 반환. 검증: npm run typecheck + (dev끄고)rm -rf .next && npm run build + agent-browser로 /host/create E2E. 누적 상태는 메모리 /Users/vivi/.claude-team/projects/-Users-vivi/memory/project_ourrealtrip_build_state.md. 데이터는 .data/*.json(백엔드없음, swappable). P0~P2 스펙은 HANDOFF_GGUI_LUMA_P0_P2.md / HANDOFF_EVENT_FLOW.md. 보안: API키/OAuth토큰 출력·커밋 금지, merchant 금지, 외부발행/메일/Slack 금지."
+  }
+}

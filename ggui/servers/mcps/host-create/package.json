@@ -1,0 +1,25 @@
+{
+  "name": "@ggui/mcp-host-create",
+  "version": "0.0.1",
+  "description": "Domain MCP server for the host-create flow: the agent drafts a community travel event proposal and echoes a validated structured payload (host_create_apply) back for the human host to review + apply to the form. Display-only product suggestions (host_recommend_products) + a safety linter (host_safety_check). No side effects, no merchant/booking behavior. Not published.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "ggui-mcp-host-create": "./dist/index.js"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -b",
+    "typecheck": "tsc -b --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.21.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 디자인 토큰 v2 — 라이트/다크 CSS 변수 (docs/DESIGN_BRIEF.md 2·10절)
+   Tailwind 색 토큰이 var(--x)를 참조하므로, 여기서 라이트 기본값을 정의하고
+   .dark에서 덮어쓴다. 마크업·클래스는 변경 없이 색만 분기된다. */
+@layer base {
+  :root {
+    color-scheme: light;
+
+    /* 표면(surface) — fill(canvas/soft/strong/sunken) + hairline(3종) 분리 (Airbnb) */
+    --surface-DEFAULT: #ffffff;
+    --surface-soft: #f7f7f7;
+    --surface-strong: #f2f2f2; /* 아이콘버튼 면 (Airbnb surface-strong) — 신규 */
+    --surface-sunken: #efeff1; /* 도메인 장바구니/입력 안쪽 면 — 유지 */
+    --surface-border: #dddddd; /* hairline (Airbnb 기본 1px 보더) */
+    --hairline-soft: #ebebeb; /* 긴 스크롤 구분선 (Airbnb hairline-soft) — 신규 */
+    --surface-borderStrong: #c1c1c1; /* border-strong (Airbnb) */
+
+    /* 텍스트(ink) — 톤 확장 (Airbnb: never pure black) */
+    --ink-DEFAULT: #222222;
+    --ink-body: #3f3f3f; /* 장문 본문 톤 (Airbnb body) — 신규 */
+    --ink-muted: #6a6a6a;
+    --ink-faint: #929292; /* muted-soft (Airbnb) */
+
+    /* 강조(brand) — Rausch (Airbnb 단일 액센트) */
+    --brand-DEFAULT: #ff385c;
+    --brand-hover: #e00b41; /* Airbnb는 hover=active(press) 통합 */
+    --brand-fg: #ffffff;
+    --brand-soft: #ffe8ec; /* Rausch 연한 틴트 (chip-toggle/selected) */
+    --brand-softfg: #c13515; /* selected 카드 텍스트 대비 */
+    --brand-disabled: #ffd1da; /* Rausch Disabled (Airbnb) — 신규 */
+
+    /* 의미색(semantic) — 도메인 기능 구동, 유지 */
+    --success-DEFAULT: #16a34a;
+    --success-soft: #e7f6ec;
+    --warn-DEFAULT: #b45309;
+    --warn-soft: #fbf1e4;
+    --info-DEFAULT: #0e7490;
+    --info-soft: #e1f2f5;
+    --neutral-DEFAULT: #71717a;
+    --neutral-soft: #f1f1f3;
+
+    /* 의미색(semantic) — Airbnb 신규 추가 (replace 아님) */
+    --error: #c13515; /* form 검증 에러 텍스트 (Rausch와 구분) */
+    --error-hover: #b32505;
+    --legal-link: #428bff; /* legal 카피 내 inline 링크 전용 */
+    --scrim: #000000; /* 모달 백드롭 (렌더 시 50% opacity) */
+
+    /* 폰트 — layout.tsx의 next/font가 바인딩하지 못해도 fallback 스택이 동작 */
+    --font-sans:
+      "Inter", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+      "Pretendard", "Noto Sans KR", "Segoe UI", Roboto, sans-serif;
+    --font-mono:
+      "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  .dark {
+    color-scheme: dark;
+
+    /* 다크는 순흑 회피(깊은 회색), 카드는 배경보다 한 단계 밝게 */
+    --surface-DEFAULT: #18181b;
+    --surface-soft: #0f0f11;
+    --surface-sunken: #232327;
+    --surface-border: #2e2e33;
+    --surface-borderStrong: #3f3f46;
+
+    --ink-DEFAULT: #fafafa;
+    --ink-muted: #a1a1aa;
+    --ink-faint: #71717a;
+
+    /* 다크에선 채도↓ 명도↑(눈부심 방지) */
+    --brand-DEFAULT: #60a5fa;
+    --brand-hover: #93c5fd;
+    --brand-fg: #0f0f11;
+    --brand-soft: #1e2a4a;
+    --brand-softfg: #bfd3ff;
+
+    /* 의미색: soft 배경은 어둡게, 텍스트(DEFAULT)는 밝게 */
+    --success-DEFAULT: #4ade80;
+    --success-soft: #142a1c;
+    --warn-DEFAULT: #fbbf24;
+    --warn-soft: #2c2310;
+    --info-DEFAULT: #22d3ee;
+    --info-soft: #102a30;
+    --neutral-DEFAULT: #a1a1aa;
+    --neutral-soft: #232327;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    /* Inter(라틴/UI) + 한글 시스템 fallback — var(--font-sans)로 통일 */
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    word-break: keep-all;
+  }
+
+  /* 수치는 mono + tabular-nums로 자리 정렬 (가격 비교 흔들림 방지) */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 포커스 가시성 — 전 인터랙티브 요소 brand(Rausch) 30% 링 (DESIGN_BRIEF 6·11절) */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow: var(--tw-shadow, 0 0 0 0 transparent), 0 0 0 3px
+      rgba(255, 56, 92, 0.3);
+  }
+
+  /* 과한 모션 회피 (DESIGN_BRIEF 11절 접근성) */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* 본문 단일 컬럼 컨테이너 — 모바일 베이스, 큰 화면에서 가운데 정렬 */
+  .container-content {
+    @apply mx-auto w-full max-w-content px-4 sm:px-6;
+  }
+
+  /* 터치 타깃 최소 44px 보장 유틸 */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}

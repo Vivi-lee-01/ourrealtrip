@@ -1,0 +1,18 @@
+# Supabase remote config for OurRealTrip.
+# OAuth secrets are read from environment variables; do not hardcode secrets here.
+project_id = "ehzivxtzlxcrhbgjqrfu"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = [
+  "http://localhost:3000/auth/callback",
+]
+
+[auth.external.google]
+enabled = true
+client_id = "env(AUTH_GOOGLE_ID)"
+secret = "env(AUTH_GOOGLE_SECRET)"
+redirect_uri = ""
+skip_nonce_check = false
+email_optional = false

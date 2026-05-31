@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>아워리얼트립 · 호스트 생성 GGUI 시안 5</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root{
+      --bg:#f7f7f8; --surface:#fff; --sunken:#efeff1; --line:#e4e4e7; --line2:#d4d4d8;
+      --ink:#18181b; --muted:#52525b; --faint:#a1a1aa; --brand:#2563eb; --brand2:#eff4ff; --brandfg:#1e40af;
+      --success:#16a34a; --successbg:#e7f6ec; --warn:#b45309; --warnbg:#fbf1e4;
+      --radius:14px; --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+    }
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",Segoe UI,sans-serif;line-height:1.55;word-break:keep-all;-webkit-font-smoothing:antialiased;}
+    button,input,textarea,select{font:inherit} button{cursor:pointer}
+    .shell{max-width:1240px;margin:0 auto;padding:28px 20px 80px}.top{display:flex;gap:16px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}.top h1{margin:0;font-size:28px;letter-spacing:-.02em}.top p{margin:4px 0 0;color:var(--muted);font-size:14px}.tabs{position:sticky;top:0;z-index:20;display:flex;gap:8px;overflow:auto;padding:10px 0 14px;background:linear-gradient(var(--bg) 80%,rgba(247,247,248,0));}.tab{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 13px;font-size:13px;font-weight:650;color:var(--muted);white-space:nowrap}.tab.active{background:var(--ink);color:white;border-color:var(--ink)}.variant{display:none}.variant.active{display:block}.note{font-size:12px;color:var(--faint)}
+    .page{background:var(--surface);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}.page-head{padding:24px 28px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:20px}.page-head h2{margin:0;font-size:30px;letter-spacing:-.03em}.page-head p{margin:6px 0 0;color:var(--muted);font-size:14px;max-width:660px}.ghost-link{border:0;background:transparent;color:var(--brand);font-weight:650;font-size:13px}.primary{border:0;background:var(--brand);color:white;border-radius:10px;padding:11px 14px;font-weight:700}.secondary{border:1px solid var(--line);background:white;color:var(--ink);border-radius:10px;padding:10px 13px;font-weight:650}.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 9px;font-size:12px;font-weight:650;background:var(--sunken);color:var(--muted)}.chip.blue{background:var(--brand2);color:var(--brandfg)}.label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.01em}.field{width:100%;border:1px solid var(--line);background:white;border-radius:10px;padding:11px 12px;color:var(--ink)}.field::placeholder{color:var(--faint)}.hair{height:1px;background:var(--line);margin:22px 0}.cover{aspect-ratio:1;border-radius:18px;background:linear-gradient(135deg,#dbeafe,#e5e7eb 45%,#bfdbfe);display:grid;place-items:center;overflow:hidden}.cover span{font-size:64px;font-weight:800;color:rgba(255,255,255,.55);font-family:ui-monospace,Menlo,monospace}.form-title{border:0;background:transparent;width:100%;font-size:28px;font-weight:800;letter-spacing:-.02em;padding:0}.form-sub{border:0;background:transparent;width:100%;font-size:16px;color:var(--muted);padding:4px 0 0}.product{border:1px solid var(--line);border-radius:14px;padding:12px;background:white}.product h4{margin:0;font-size:14px}.product p{margin:4px 0 0;color:var(--muted);font-size:12px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}.divider{height:1px;background:var(--line)}
+
+    /* shared fake ggui render */
+    .render{border:1px solid var(--line);background:#fff;border-radius:16px;padding:14px;box-shadow:var(--shadow)}.render-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}.render-head strong{font-size:14px}.render-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.candidate{border:1px solid var(--line);border-radius:13px;padding:11px;background:#fff;min-height:132px;display:flex;flex-direction:column;gap:8px}.candidate:hover{border-color:var(--line2);box-shadow:var(--shadow)}.candidate .thumb{height:48px;border-radius:10px;background:linear-gradient(135deg,#e0f2fe,#f4f4f5)}.candidate b{font-size:13px;line-height:1.3}.candidate small{color:var(--muted);font-size:11px}.candidate button{margin-top:auto;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 8px;font-size:12px;font-weight:700}.prompt{display:flex;gap:8px;align-items:flex-end}.prompt textarea{min-height:48px;resize:vertical}.mini-list{display:grid;gap:8px}.summary-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:linear-gradient(#fff,#fbfbfc)}.summary-card h3{margin:0 0 6px;font-size:18px;letter-spacing:-.01em}.summary-card p{margin:0;color:var(--muted);font-size:13px}.applybar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+
+    /* Variant 1 */
+    .v1-grid{display:grid;grid-template-columns:300px 1fr;gap:44px;padding:28px}.v1-side{display:grid;gap:18px;align-content:start}.quiet-help{border:1px solid var(--line);border-radius:18px;background:#fff;padding:14px}.quiet-help h3{margin:0;font-size:15px}.quiet-help p{margin:5px 0 12px;color:var(--muted);font-size:12px}.v1-main{display:grid;gap:22px}.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;padding:2px}.seg button{border:0;background:transparent;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;color:var(--muted)}.seg button.on{background:var(--sunken);color:var(--ink)}
+
+    /* Variant 2 */
+    .brief{padding:24px 28px;border-bottom:1px solid var(--line);background:linear-gradient(#fff,#fbfbfc)}.brief h3{margin:0 0 10px;font-size:18px}.briefbox{display:grid;grid-template-columns:1fr auto;gap:10px}.briefbox textarea{height:58px}.v2-body{display:grid;grid-template-columns:300px 1fr;gap:36px;padding:28px}.preview-strip{margin-top:14px;display:grid;grid-template-columns:1.1fr .9fr;gap:12px}.brief-result{border:1px solid var(--line);background:#fff;border-radius:16px;padding:14px}.brief-result ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:13px}
+
+    /* Variant 3 */
+    .v3-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(360px,2fr);gap:28px;padding:24px 30px 30px;align-items:start}.v3-form{max-width:none}.workbench{position:sticky;top:68px;border-left:1px solid var(--line);padding-left:24px}.workbench-card{border:1px solid var(--line);background:#fff;border-radius:20px;padding:16px;box-shadow:var(--shadow)}.workbench-card h3{margin:0;font-size:17px}.workbench-card>p{margin:5px 0 14px;color:var(--muted);font-size:13px}.v3 .render-grid{grid-template-columns:1fr}.v3 .candidate{min-height:auto;display:grid;grid-template-columns:58px 1fr auto;align-items:center}.v3 .candidate .thumb{height:58px}.v3 .candidate button{margin:0;white-space:nowrap}
+
+
+    .plaud-panel{min-height:760px;display:grid;grid-template-rows:auto 1fr auto;gap:18px;border-left:1px solid var(--line);padding-left:24px}.plaud-card{border:1px solid var(--line);border-radius:16px;background:#fff;padding:16px;font-size:15px;line-height:1.55}.plaud-card:hover{border-color:var(--line2);box-shadow:var(--shadow)}.plaud-actions{display:flex;gap:10px;overflow:auto;padding-bottom:2px}.plaud-actions button{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 16px;font-size:14px;font-weight:650}.plaud-composer{border:1.5px solid #7c3aed;border-right-color:#22c55e;border-bottom-color:#22c55e;border-radius:16px;background:#fff;padding:14px}.plaud-composer textarea{width:100%;min-height:142px;border:0;outline:0;resize:vertical;font-size:18px;line-height:1.55;color:var(--ink)}.plaud-composer-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px}.send-circle{width:48px;height:48px;border-radius:999px;border:0;background:#111;color:#fff;font-size:24px;display:grid;place-items:center}.doc-page{background:#fff;padding:8px 6px}.doc-page h1{font-size:42px;line-height:1.18;letter-spacing:-.035em;margin:0 0 28px}.doc-page h2{font-size:25px;margin:30px 0 12px}.doc-meta{border-left:4px solid var(--line);padding-left:18px;color:var(--muted);font-size:16px;line-height:1.9}.doc-page p,.doc-page li{font-size:18px;line-height:1.75}.apply-note{font-size:13px;color:var(--muted);margin-top:12px}.soft-divider{height:1px;background:var(--line);margin:24px 0}
+
+    /* Variant 4 */
+    .wizard{padding:24px 28px}.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px}.step{padding:10px;border-bottom:2px solid var(--line);color:var(--muted);font-size:12px;font-weight:700}.step.on{border-color:var(--brand);color:var(--ink)}.wizard-grid{display:grid;grid-template-columns:1fr 360px;gap:34px}.stage h3{font-size:24px;margin:0 0 6px}.stage>p{margin:0 0 20px;color:var(--muted)}.stage-card{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fff}.assist-timeline{display:grid;gap:12px}.assist-row{display:grid;grid-template-columns:24px 1fr;gap:10px}.dot{width:24px;height:24px;border-radius:999px;background:var(--brand2);color:var(--brandfg);display:grid;place-items:center;font-size:12px;font-weight:800}.assist-row p{margin:0;color:var(--muted);font-size:13px}.assist-row strong{font-size:14px}
+
+    /* Variant 5 */
+    .v5-wrap{padding:28px;max-width:760px;margin:0 auto}.inline-section{padding:20px 0;border-bottom:1px solid var(--line)}.inline-section h3{margin:0 0 10px;font-size:15px}.suggest-link{display:inline-flex;align-items:center;gap:6px;margin-top:8px;border:0;background:transparent;color:var(--brand);font-size:12px;font-weight:750;padding:0}.suggestion{margin-top:10px;border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px}.suggestion.compact .render-grid{grid-template-columns:1fr 1fr}.tone-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tone{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fff}.tone b{font-size:13px}.tone p{font-size:12px;color:var(--muted);margin:4px 0 0}
+
+    .compare{margin-top:22px;border:1px solid var(--line);border-radius:18px;background:#fff;overflow:hidden}.compare table{width:100%;border-collapse:collapse;font-size:13px}.compare th,.compare td{border-bottom:1px solid var(--line);padding:11px;text-align:left;vertical-align:top}.compare th{background:#fbfbfc;color:var(--muted)}.compare tr:last-child td{border-bottom:0}.opinion{padding:14px 16px;background:#fbfbfc;color:var(--ink);font-size:14px}.opinion b{color:var(--brandfg)}
+    @media(max-width:560px){.v1-grid,.v2-body,.wizard-grid{grid-template-columns:1fr}.workbench{position:relative;top:auto;border-left:0;padding-left:0}.render-grid,.preview-strip{grid-template-columns:1fr}.page-head{display:block}.briefbox{grid-template-columns:1fr}.steps{grid-template-columns:1fr 1fr}.shell{padding:18px 12px 60px}.page-head,.v1-grid,.v2-body,.v3-grid,.wizard,.v5-wrap,.brief{padding:18px}.cover{max-width:280px}.top{display:block}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="top">
+    <div>
+      <h1>호스트 이벤트 생성 · GGUI 통합 시안 5</h1>
+      <p>실제 코드는 아니고 배치/톤 비교용 HTML. 데모 브랜딩, 다크 테마, 로봇/마법봉 톤은 의도적으로 뺐음.</p>
+    </div>
+    <span class="chip blue">OurRealTrip host/create</span>
+  </div>
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="v1">1 조용한 보조 패널</button>
+    <button class="tab" data-tab="v2">2 상단 브리프</button>
+    <button class="tab" data-tab="v3">3 오른쪽 대화 작업대</button>
+    <button class="tab" data-tab="v4">4 단계형 마법사</button>
+    <button class="tab" data-tab="v5">5 인라인 제안 블록</button>
+  </div>
+
+  <section id="v1" class="variant active">
+    <div class="page">
+      <div class="page-head"><div><h2>이벤트 만들기</h2><p>이야기를 이벤트로 만들고, 마이리얼트립 상품을 붙여 예약 동선으로 연결합니다.</p></div><button class="ghost-link">미리보기 안내</button></div>
+      <div class="v1-grid">
+        <aside class="v1-side">
+          <div><div class="cover"><span>밤</span></div><input class="field" style="margin-top:10px;border:0;background:transparent;padding-left:0" placeholder="커버 이미지 URL" /></div>
+          <div><div class="label" style="margin-bottom:8px">만드는 방식</div><div class="seg"><button class="on">직접</button><button>도움 받기</button></div></div>
+          <div class="quiet-help">
+            <h3>초안 도움</h3><p>모임 성격과 원하는 분위기를 적으면 제목·스토리·상품 후보를 정리해요.</p>
+            <div class="prompt"><textarea class="field" placeholder="러닝크루 12명이 주말에 갈 당일치기 여행"></textarea><button class="secondary">정리</button></div>
+            <div class="summary-card" style="margin-top:12px"><span class="chip">추천안</span><h3 style="margin-top:8px">한강 러닝 후, 회복하는 오후</h3><p>운동 후 대화가 자연스럽게 이어지는 반나절 액티비티 중심.</p><div class="applybar"><span class="note">상품 후보 3개 포함</span><button class="secondary">폼에 채우기</button></div></div>
+          </div>
+        </aside>
+        <main class="v1-main">
+          <div><input class="form-title" placeholder="이벤트 이름" value="한강 러닝 후, 회복하는 오후"><input class="form-sub" placeholder="한 줄 컨셉" value="운동 후 낯설지 않게 이어지는 반나절 회복 모임"></div>
+          <div><div class="label">스토리</div><textarea class="field" rows="5">같이 달린 뒤 바로 흩어지기 아쉬운 사람들을 위한 오후입니다. 가볍게 씻고, 차분한 활동을 하며 자연스럽게 이야기를 나눕니다.</textarea></div>
+          <div class="hair"></div><div style="display:grid;gap:12px"><div><div class="label">일시</div><input class="field" value="7월 둘째 주 토요일 오후" /></div><div><div class="label">장소</div><input class="field" value="서울 성수 · 한강 접근 동선" /></div></div>
+          <div class="hair"></div><div><div style="display:flex;justify-content:space-between"><span class="label">티켓 · 연결 상품</span><button class="ghost-link">상품 추가</button></div><div class="product" style="margin-top:10px"><h4>성수 티 클래스</h4><p>마이리얼트립 상품 URL · <span class="mono">38,000원~</span></p></div></div>
+          <button class="primary">초안 만들기</button>
+        </main>
+      </div>
+    </div>
+  </section>
+
+  <section id="v2" class="variant">
+    <div class="page">
+      <div class="page-head"><div><h2>이벤트 만들기</h2><p>먼저 한 문장으로 시작하고, 마음에 드는 초안만 아래 폼에 반영합니다.</p></div></div>
+      <div class="brief"><h3>먼저 한 문장으로 시작</h3><div class="briefbox"><textarea class="field" placeholder="예: 북클럽 멤버 8명이 7월에 교토 사진 여행을 가고 싶어해요">30대 와인 모임 10명이 8월 말에 서울 근교에서 하루 동안 다녀올 수 있는 여행</textarea><button class="primary">초안 만들기</button></div>
+        <div class="preview-strip"><div class="brief-result"><span class="chip blue">초안 미리보기</span><h3 style="margin:8px 0 4px">느리게 걷는 와이너리 데이</h3><p>가볍게 배우고, 마시고, 돌아오는 하루 코스. 처음 온 사람도 대화에 들어오기 쉬운 구성.</p><ul><li>일정: 8월 말 토요일</li><li>장소: 경기 북부 와이너리/레스토랑</li><li>상품 후보: 체험 2개, 이동 옵션 1개</li></ul><div class="applybar"><span class="note">공개 전 다시 검토</span><button class="secondary">이 내용으로 채우기</button></div></div>
+        <div class="render"><div class="render-head"><strong>검토할 후보</strong><span class="chip">3개</span></div><div class="render-grid"><div class="candidate"><div class="thumb"></div><b>와인 테이스팅 클래스</b><small>입문자용 · 2시간</small><button>선택</button></div><div class="candidate"><div class="thumb"></div><b>근교 셔틀 포함 투어</b><small>이동 부담 낮음</small><button>선택</button></div><div class="candidate"><div class="thumb"></div><b>레스토랑 페어링</b><small>대화 중심</small><button>선택</button></div></div></div></div>
+      </div>
+      <div class="v2-body"><aside><div class="cover"><span>와</span></div></aside><main class="v1-main"><div><input class="form-title" placeholder="이벤트 이름"><input class="form-sub" placeholder="한 줄 컨셉"></div><div><div class="label">스토리</div><textarea class="field" rows="5" placeholder="어떤 이야기인지, 누구와 함께하고 싶은지."></textarea></div><div class="hair"></div><input class="field" placeholder="일시"><input class="field" placeholder="장소"><div class="hair"></div><button class="primary">초안 만들기</button></main></div>
+    </div>
+  </section>
+
+  <section id="v3" class="variant v3">
+    <div class="page">
+      <div class="page-head"><div><h2>이벤트 만들기</h2><p>플라우드처럼 왼쪽은 생성되는 이벤트 페이지, 오른쪽은 그 페이지에 대해 묻고 조정하는 대화면입니다. 질문·스킬·입력창이 오른쪽에 고정됩니다.</p></div><button class="secondary">닫기</button></div>
+      <div class="v3-grid">
+        <main class="doc-page">
+          <h1>서울의 밤을 걷는<br>사진 산책</h1>
+          <h2>이벤트 정보</h2>
+          <div class="doc-meta">
+            <div>날짜: 2026년 6월 22일 토요일 19:00–21:30</div>
+            <div>장소: 을지로 · 청계천 일대</div>
+            <div>대상: 사진 실력보다 산책과 대화를 좋아하는 사람들</div>
+          </div>
+          <h2>이벤트 소개</h2>
+          <p>낯선 사람과도 말문이 트이는 건, 같은 장면을 보고 있을 때입니다. 해가 진 뒤의 서울을 천천히 걸으며 사진을 찍고, 마지막에는 함께 고른 사진을 나눕니다.</p>
+          <p>이 모임은 사진 실력을 겨루는 시간이 아닙니다. 좋은 카메라가 없어도 괜찮고, 혼자 와도 어색하지 않게 시작할 수 있도록 짧은 자기소개와 산책 루트를 준비합니다.</p>
+          <h2>페이지 구성 초안</h2>
+          <ul>
+            <li>커버 문구: “같은 밤을 보고, 각자의 장면을 남기는 시간”</li>
+            <li>진행 방식: 짧은 안내 → 산책 촬영 → 사진 1장 공유 → 선택형 마무리</li>
+            <li>연결 상품: 야간 사진 워크숍, 필름 카메라 산책, 조용한 바 옵션</li>
+            <li>주의: 예약은 각 상품 판매처에서 개별 진행. 단일 결제/패키지처럼 보이지 않게 표시</li>
+          </ul>
+          <div class="soft-divider"></div>
+          <button class="primary" style="width:260px">이벤트 페이지 미리보기</button>
+        </main>
+        <aside class="plaud-panel">
+          <div>
+            <span class="chip">Beta</span>
+            <div style="height:28px"></div>
+            <div class="mini-list" style="gap:14px">
+              <button class="plaud-card" style="text-align:left">이 모임이 소개팅처럼 보이지 않게 하려면 어떤 문구를 빼야 할까요?</button>
+              <button class="plaud-card" style="text-align:left">상품 연결을 하면서도 판매 페이지처럼 보이지 않게 만드는 방법은?</button>
+              <button class="plaud-card" style="text-align:left">처음 온 사람이 어색하지 않게 시작하려면 진행 순서를 어떻게 잡아야 할까요?</button>
+            </div>
+          </div>
+          <div></div>
+          <div>
+            <div class="plaud-actions">
+              <button>페이지 반영</button>
+              <button>참여 안내</button>
+              <button>연결 상품</button>
+              <button>더 많은 스킬 ˅</button>
+            </div>
+            <div class="plaud-composer">
+              <textarea>이렇게 입력해서 작업하면 바로 옆 이벤트 페이지가 바뀌는 거지! 상품은 하단에 조용히 붙이고, 소개팅처럼 보이는 문구는 빼줘.</textarea>
+              <div class="plaud-composer-footer">
+                <span class="note">이 초안에 대해 물어보기</span>
+                <button class="send-circle">↑</button>
+              </div>
+            </div>
+            <p class="apply-note">답변을 확인한 뒤 “페이지에 반영”을 누르면 왼쪽 초안이 업데이트되는 모델.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section id="v4" class="variant">
+    <div class="page"><div class="page-head"><div><h2>이벤트 만들기</h2><p>한 번에 긴 폼을 채우지 않고, 이야기 → 일정 → 상품 → 점검 순서로 만듭니다.</p></div></div><div class="wizard"><div class="steps"><div class="step on">1 이야기</div><div class="step">2 일정</div><div class="step">3 상품</div><div class="step">4 점검</div></div><div class="wizard-grid"><main class="stage"><h3>어떤 모임을 위한 이벤트인가요?</h3><p>모임의 성격과 사람들이 기대하는 분위기를 먼저 잡습니다.</p><div class="stage-card v1-main"><input class="form-title" placeholder="이벤트 이름" value="퇴근 후, 작은 바다 수업"><input class="form-sub" value="도시에서 벗어나지 않고 바다를 배우는 저녁"><div><div class="label">스토리</div><textarea class="field" rows="6">일주일을 마친 사람들이 너무 멀리 가지 않고도 기분을 바꿀 수 있는 저녁입니다. 해양 생태 이야기를 듣고, 관련 체험 상품을 각자 예약할 수 있게 연결합니다.</textarea></div><div style="display:flex;justify-content:space-between"><button class="secondary">이전</button><button class="primary">일정 정하기</button></div></div></main><aside><div class="render"><div class="render-head"><strong>다음 단계에서 확인할 것</strong><span class="chip blue">초안 기준</span></div><div class="assist-timeline"><div class="assist-row"><div class="dot">1</div><div><strong>모임 톤</strong><p>조용한 학습형 / 가벼운 체험형 중 선택 필요</p></div></div><div class="assist-row"><div class="dot">2</div><div><strong>일정 후보</strong><p>평일 저녁이면 2시간 이하 구성이 적합</p></div></div><div class="assist-row"><div class="dot">3</div><div><strong>상품 연결</strong><p>예약 버튼은 판매처로 분리, 여기서는 후보만 붙임</p></div></div></div><div class="applybar"><span class="note">단계별로만 반영</span><button class="secondary">문장 다듬기</button></div></div></aside></div></div></div>
+  </section>
+
+  <section id="v5" class="variant">
+    <div class="page"><div class="page-head"><div><h2>이벤트 만들기</h2><p>별도 패널 없이, 필요한 입력 영역 아래에만 제안 블록이 나타납니다.</p></div></div><div class="v5-wrap"><div class="inline-section"><input class="form-title" value="여름밤 책방 산책"><input class="form-sub" value="각자 좋아하는 문장을 들고 만나는 조용한 저녁"><button class="suggest-link">이름 후보 보기</button><div class="suggestion"><div class="tone-options"><div class="tone"><b>문장 줍는 여름밤</b><p>조금 더 시적이고 가벼움</p></div><div class="tone"><b>퇴근 후 책방 산책</b><p>일정과 맥락이 바로 보임</p></div></div></div></div><div class="inline-section"><h3>스토리</h3><textarea class="field" rows="5">책을 많이 읽지 않아도 괜찮습니다. 각자 좋아하는 문장 하나만 가져와서, 작은 책방을 걷고 이야기를 나눕니다.</textarea><button class="suggest-link">모임장 말투로 다듬기</button><div class="suggestion"><span class="chip">다듬은 문장</span><p style="margin:8px 0 0;color:var(--muted);font-size:13px">책을 많이 읽는 사람이 아니어도 괜찮아요. 좋아하는 문장 하나를 들고 와서, 작은 책방을 천천히 걷고 서로의 취향을 나눕니다.</p><div class="applybar"><span class="note">원문은 유지됨</span><button class="secondary">교체</button></div></div></div><div class="inline-section"><h3>티켓 · 연결 상품</h3><div class="product"><h4>상품명</h4><p>마이리얼트립 상품 URL</p></div><button class="suggest-link">상품 후보 찾기</button><div class="suggestion compact"><div class="render-head"><strong>붙일 수 있는 상품</strong><span class="note">2개</span></div><div class="render-grid"><div class="candidate"><div class="thumb"></div><b>독립서점 큐레이션 투어</b><small>서울 · 2시간</small><button>추가</button></div><div class="candidate"><div class="thumb"></div><b>북토크 공간 대관</b><small>소규모 모임</small><button>추가</button></div></div></div></div><button class="primary" style="width:100%;margin-top:22px">초안 만들기</button></div></div>
+  </section>
+
+  <div class="compare"><table><thead><tr><th>시안</th><th>AI밤티</th><th>GGUI 노출감</th><th>구현 부담</th><th>좋은 경우</th></tr></thead><tbody><tr><td>1 보조 패널</td><td>낮음</td><td>중간</td><td>낮음</td><td>현재 폼을 최대한 유지</td></tr><tr><td>2 상단 브리프</td><td>중간</td><td>높음</td><td>중간</td><td>데모에서 빠르게 이해시키기</td></tr><tr><td>3 오른쪽 대화 작업대</td><td>낮음</td><td>높음</td><td>중간+</td><td>대화로 이벤트 페이지 자체를 만들기</td></tr><tr><td>4 단계형</td><td>낮음</td><td>중간</td><td>높음</td><td>장기 제품 UX</td></tr><tr><td>5 인라인</td><td>최저</td><td>낮음</td><td>높음</td><td>가장 자연스러운 완성형</td></tr></tbody></table><div class="opinion"><b>내 선택:</b> 3번 오른쪽 대화 작업대형. 상품 후보 검색이 아니라 사용자가 질문하며 방향을 좁히고, 마음에 드는 초안만 페이지에 반영하는 흐름이라 GGUI 강점이 더 자연스럽게 보임.</div></div>
+</div>
+<script>
+  const tabs=[...document.querySelectorAll('.tab')], variants=[...document.querySelectorAll('.variant')];
+  tabs.forEach(t=>t.addEventListener('click',()=>{tabs.forEach(x=>x.classList.remove('active'));variants.forEach(v=>v.classList.remove('active'));t.classList.add('active');document.getElementById(t.dataset.tab).classList.add('active');window.scrollTo({top:0,behavior:'smooth'});}));
+</script>
+</body>
+</html>
