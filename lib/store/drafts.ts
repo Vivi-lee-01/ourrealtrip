@@ -23,7 +23,11 @@ import type {
   ProposalStatus,
 } from "@/lib/types";
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+// Vercel 서버리스는 읽기전용 FS → /tmp 로 분기 (로컬은 프로젝트 루트 .data).
+// 단, draft 발행은 Supabase insert 가 우선이며 파일 경로는 폴백/로컬 전용이다.
+const DATA_DIR = process.env.VERCEL
+  ? path.join("/tmp", "ourrealtrip-data")
+  : path.join(process.cwd(), ".data");
 const DRAFTS_FILE = path.join(DATA_DIR, "drafts.json");
 
 /** draft에 연결된 마이리얼트립 상품(A방식: 표시 전용) */

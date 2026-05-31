@@ -26,8 +26,12 @@ import {
   wouldDowngrade,
 } from "@/lib/domain/booking-progress";
 
-// 프로젝트 루트 기준 .data 디렉토리 (process.cwd() = Next.js 프로젝트 루트)
-const DATA_DIR = path.join(process.cwd(), ".data");
+// 데이터 디렉토리. 로컬은 프로젝트 루트 .data, Vercel 서버리스는 읽기전용 FS라
+// 쓰기 가능한 유일 경로 /tmp 로 분기한다(없으면 recordInterest 쓰기가 500 → "의향 남기기" 실패).
+// ※ /tmp 는 인스턴스별·휘발성 — 영속이 필요하면 Supabase anon insert 로 교체(주석 참고).
+const DATA_DIR = process.env.VERCEL
+  ? path.join("/tmp", "ourrealtrip-data")
+  : path.join(process.cwd(), ".data");
 const INTEREST_FILE = path.join(DATA_DIR, "interest.json");
 const CLICKS_FILE = path.join(DATA_DIR, "clicks.json");
 const BOOKING_FILE = path.join(DATA_DIR, "booking.json");

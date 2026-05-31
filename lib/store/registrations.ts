@@ -10,7 +10,10 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+// Vercel 서버리스는 읽기전용 FS → /tmp 로 분기 (로컬은 프로젝트 루트 .data)
+const DATA_DIR = process.env.VERCEL
+  ? path.join("/tmp", "ourrealtrip-data")
+  : path.join(process.cwd(), ".data");
 const REG_FILE = path.join(DATA_DIR, "registrations.json");
 
 /** 신청 상태 — 승인 흐름 */
