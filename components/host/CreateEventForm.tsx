@@ -11,7 +11,7 @@
 //  - “실시간 반영 로그”가 아니라 Q&A → 사용자 확인 → 페이지 반영 흐름이다.
 //  - 상품은 마이리얼트립 판매처 개별 예약으로 연결한다. 단일 패키지/묶음결제로 보이지 않게 한다.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Button from "@/components/ui/Button";
 import ReactQueryProvider from "@/components/host/ReactQueryProvider";
@@ -74,6 +74,9 @@ const INPUT =
   "text-ink placeholder:text-ink-faint focus-visible:border-brand focus-visible:outline-none";
 const LABEL = "text-label font-medium text-ink-muted";
 
+// 작성 중 초안 자동 보존 키 — 로그인 왕복 등 페이지 이탈에도 폼이 날아가지 않게 한다.
+const DRAFT_LS_KEY = "ourrealtrip/host-create-draft";
+
 export default function CreateEventForm() {
   const [mode, setMode] = useState<CreateMode>("human");
   const [title, setTitle] = useState("");
@@ -103,6 +106,66 @@ export default function CreateEventForm() {
   // ── P2 foundation: 에이전트가 제안하면 채워지고 그대로 저장된다 ──
   const [scheduleCandidates, setScheduleCandidates] = useState<ScheduleCandidate[]>([]);
   const [eventOptions, setEventOptions] = useState<DraftOption[]>([]);
+
+  // ── 작성 중 초안 자동 보존 (로그인 왕복·새로고침·페이지 이탈에도 유지) ──
+  // hydrated 가 true 가 되기 전(=복원 완료 전)에는 저장 effect 가 동작하지 않게 막아,
+  // 마운트 첫 렌더의 빈 값이 저장본을 덮어쓰는 레이스를 차단한다.
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_LS_KEY);
+      if (raw) {
+        const d = JSON.parse(raw) as Record<string, unknown>;
+        const s = (v: unknown) => (typeof v === "string" ? v : undefined);
+        const b = (v: unknown) => (typeof v === "boolean" ? v : undefined);
+        if (s(d.title) !== undefined) setTitle(d.title as string);
+        if (s(d.concept) !== undefined) setConcept(d.concept as string);
+        if (s(d.description) !== undefined) setDescription(d.description as string);
+        if (s(d.dateText) !== undefined) setDateText(d.dateText as string);
+        if (s(d.startDate) !== undefined) setStartDate(d.startDate as string);
+        if (s(d.startTime) !== undefined) setStartTime(d.startTime as string);
+        if (s(d.endDate) !== undefined) setEndDate(d.endDate as string);
+        if (s(d.endTime) !== undefined) setEndTime(d.endTime as string);
+        if (s(d.timezone) !== undefined) setTimezone(d.timezone as string);
+        if (s(d.locationText) !== undefined) setLocationText(d.locationText as string);
+        if (s(d.coverUrl) !== undefined) setCoverUrl(d.coverUrl as string);
+        if (b(d.requiresApproval) !== undefined) setRequiresApproval(d.requiresApproval as boolean);
+        if (b(d.capacityLimitEnabled) !== undefined) setCapacityLimitEnabled(d.capacityLimitEnabled as boolean);
+        if (s(d.capacity) !== undefined) setCapacity(d.capacity as string);
+        if (b(d.waitlistEnabled) !== undefined) setWaitlistEnabled(d.waitlistEnabled as boolean);
+        if (Array.isArray(d.rows) && d.rows.length > 0) setRows(d.rows as ProductRow[]);
+        if (b(d.agentFilled) !== undefined) setAgentFilled(d.agentFilled as boolean);
+        if (s(d.audience) !== undefined) setAudience(d.audience as EventAudience);
+        if (s(d.communityId) !== undefined) setCommunityId(d.communityId as string);
+        if (s(d.locationVisibility) !== undefined) setLocationVisibility(d.locationVisibility as LocationVisibility);
+        if (s(d.mood) !== undefined) setMood(d.mood as MoodPreset | "");
+        if (s(d.participationQuestions) !== undefined) setParticipationQuestions(d.participationQuestions as string);
+        if (Array.isArray(d.scheduleCandidates)) setScheduleCandidates(d.scheduleCandidates as ScheduleCandidate[]);
+        if (Array.isArray(d.eventOptions)) setEventOptions(d.eventOptions as DraftOption[]);
+      }
+    } catch {
+      // 손상된 저장본은 무시하고 빈 폼으로 시작
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return; // 복원 완료 전에는 저장 금지(덮어쓰기 방지)
+    try {
+      localStorage.setItem(
+        DRAFT_LS_KEY,
+        JSON.stringify({
+          title, concept, description, dateText, startDate, startTime, endDate, endTime,
+          timezone, locationText, coverUrl, requiresApproval, capacityLimitEnabled, capacity,
+          waitlistEnabled, rows, agentFilled, audience, communityId, locationVisibility, mood,
+          participationQuestions, scheduleCandidates, eventOptions,
+        }),
+      );
+    } catch {
+      // 저장 실패(용량 등)는 조용히 무시 — 폼 동작은 막지 않는다
+    }
+  }, [hydrated, title, concept, description, dateText, startDate, startTime, endDate, endTime, timezone, locationText, coverUrl, requiresApproval, capacityLimitEnabled, capacity, waitlistEnabled, rows, agentFilled, audience, communityId, locationVisibility, mood, participationQuestions, scheduleCandidates, eventOptions]);
 
   const gradient = coverGradient(title || "ourrealtrip");
   const initial = coverInitial(title || "이벤트");
