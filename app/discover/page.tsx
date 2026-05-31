@@ -73,8 +73,21 @@ export default async function DiscoverPage() {
     publishedPilots = [];
   }
 
-  // 발행 이벤트를 캐러셀 맨 앞(최신순)에 두어 방금 만든 이벤트가 즉시 보이게 한다.
-  const pilots: PilotCardData[] = [...publishedPilots, ...seedPilots];
+  // 메인 캐러셀 우선 노출: 이재규·이웅재·조재표·Jeffrey 4팀을 항상 맨 앞으로 고정한다.
+  // (발행 이벤트가 앞서 밀어내지 않도록 최종 정렬에서 강제 — V8 sort는 stable이라 나머지 순서 유지)
+  const FRONT_PILOT_SLUGS = [
+    "ouroboros-seoul-oneday", // 이재규
+    "beijing-mandu-2d1n", // 이웅재
+    "my-girlfriend-drawing", // 조재표
+    "jeffrey-gukjungbak-docent", // Jeffrey
+  ];
+  const frontRank = (slug: string) => {
+    const i = FRONT_PILOT_SLUGS.indexOf(slug);
+    return i === -1 ? FRONT_PILOT_SLUGS.length : i;
+  };
+  const pilots: PilotCardData[] = [...publishedPilots, ...seedPilots].sort(
+    (a, b) => frontRank(a.slug) - frontRank(b.slug),
+  );
 
   // 지금 모이는 여행: 파일럿을 제외한 기존 트립(교토/발리/하와이).
   // 참여의향수 내림차순, 동률이면 안정(원래 순서) 유지(최신/시드 순서 = DISCOVER.md D6 폴백)
