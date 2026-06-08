@@ -147,11 +147,9 @@ export async function createEventDraftAction(form: FormData): Promise<void> {
     redirect("/login?next=/host/create");
   }
 
-  const title = str(form, "title");
-  if (!title) {
-    // 제목 없으면 진행 불가 — 폼에서 required로 막지만 서버에서도 방어
-    throw new Error("이벤트 이름은 필수입니다.");
-  }
+  // 호스트가 먼저 미리보기 화면부터 열어볼 수 있도록 빈 제목도 draft로 허용한다.
+  // 브라우저 기본 required 검증은 시각 피드백이 약해서 “버튼이 안 눌림”처럼 보였음.
+  const title = str(form, "title") ?? "제목 없는 이벤트";
 
   const capacityRaw = str(form, "recruit_capacity");
   const recruit_capacity = capacityRaw ? Number(capacityRaw) : null;

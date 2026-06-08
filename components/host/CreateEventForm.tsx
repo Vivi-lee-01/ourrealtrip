@@ -12,6 +12,7 @@
 //  - 상품은 마이리얼트립 판매처 개별 예약으로 연결한다. 단일 패키지/묶음결제로 보이지 않게 한다.
 
 import { useEffect, useMemo, useState } from "react";
+import { useFormStatus } from "react-dom";
 import dynamic from "next/dynamic";
 import Button from "@/components/ui/Button";
 import ReactQueryProvider from "@/components/host/ReactQueryProvider";
@@ -66,6 +67,23 @@ function emptyRow(): ProductRow {
 
 function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
+}
+
+function PreviewSubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      type="submit"
+      variant="primary"
+      size="lg"
+      className="w-full"
+      disabled={pending}
+      aria-busy={pending}
+    >
+      {pending ? "초안 저장 중…" : "미리보기로 이동"}
+    </Button>
+  );
 }
 
 // 공통 입력 — 문서형 페이지 안에서 과하게 폼처럼 보이지 않도록 얇은 선만 사용
@@ -308,7 +326,6 @@ export default function CreateEventForm() {
             <div className="min-w-0 space-y-3">
               <input
                 name="title"
-                required
                 placeholder="이벤트 이름"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -783,10 +800,10 @@ export default function CreateEventForm() {
                 </span>
               </button>
               <div className="space-y-3 border-t border-surface-border p-4">
-                <Button type="submit" variant="primary" size="lg" className="w-full">
-                  미리보기로 이동
-                </Button>
-                <p className="text-caption text-ink-faint">공개 전 승인 단계가 한 번 더 있습니다.</p>
+                <PreviewSubmitButton />
+                <p className="text-caption text-ink-faint">
+                  제목을 비워도 초안은 만들 수 있습니다. 공개 전 승인 단계가 한 번 더 있습니다.
+                </p>
               </div>
             </aside>
           </div>
