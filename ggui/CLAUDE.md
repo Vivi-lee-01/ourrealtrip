@@ -132,7 +132,8 @@ both read it via `dotenv-cli`.
 
 | Var                       | Required | Purpose                                                          |
 | ------------------------- | -------- | ---------------------------------------------------------------- |
-| `ANTHROPIC_API_KEY`       | yes      | Drives both the agent AND ggui's UI generation.                  |
+| `OPENAI_API_KEY`          | ggui     | Drives ggui's UI generation (`servers/ggui/ggui.json`).          |
+| `ANTHROPIC_API_KEY` / `CLAUDE_CODE_OAUTH_TOKEN` | agent | Required by the current Claude Agent SDK backend.                 |
 | `RAILWAY_API_TOKEN`       | deploy   | Account token for `pnpm deploy:railway` (see Deploy).            |
 | `GGUI_TODO_MCP_URL`       | demo     | `http://localhost:6782/mcp` — wires the todo tools into the agent. |
 | `GGUI_MCP_URL`            | no       | Where the agent finds the ggui MCP (default `…:6781/mcp`).       |
@@ -140,8 +141,10 @@ both read it via `dotenv-cli`.
 | `PORT`                    | no       | Agent backend port (default 6790).                               |
 | `VITE_AGENT_ENDPOINT_URL` | no       | Where the browser bundle reaches the agent backend.              |
 
-The ggui server reads its model from `servers/ggui/ggui.json#generation.model`,
-not an env var.
+The ggui server reads its UI-generation model from
+`servers/ggui/ggui.json#generation.model`, not an env var. It is currently
+set to `openai:gpt-5.5-2026-04-23`; the agent backend remains the Claude Agent
+SDK variant until `servers/agent` is migrated separately.
 
 ## Deploy
 

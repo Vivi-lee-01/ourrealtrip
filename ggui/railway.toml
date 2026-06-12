@@ -16,7 +16,7 @@
 #   2. Create FOUR services in the project, one per [services.<name>] block below.
 #      Railway's "deploy from repo" flow picks up these settings automatically.
 #   3. Set the secrets noted under [services.agent.env] / [services.ggui.env] —
-#      your ANTHROPIC_API_KEY in particular.
+#      ANTHROPIC_API_KEY for the agent and OPENAI_API_KEY for ggui generation.
 #   4. Open the web service's public URL.
 #
 # Future: when guuey.com ships, drop a `guuey.json` next to this file. Railway
@@ -51,9 +51,8 @@ startCommand = "pnpm --filter ./servers/ggui start"
 
 [services.ggui.env]
 PORT = "6781"
-# ggui's own LLM-driven UI generator needs an LLM key — same provider as
-# the agent in this template; pick a different provider via ggui.json.
-# ANTHROPIC_API_KEY = "sk-ant-..."
+# ggui's own LLM-driven UI generator uses OpenAI per servers/ggui/ggui.json.
+# OPENAI_API_KEY = "sk-..."
 
 # ── todo (sample domain MCP) ─────────────────────────────────────────────
 # Replace this block with your own MCP servers as your app grows. Private

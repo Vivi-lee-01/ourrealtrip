@@ -28,7 +28,7 @@ tools and renders a React UI → you click in that UI → the agent reacts.
 
 ```bash
 pnpm install
-cp .env.example .env.local   # add your ANTHROPIC_API_KEY
+cp .env.example .env.local   # add OPENAI_API_KEY for ggui UI generation
 pnpm dev                     # starts all four servers, then opens the app
 ```
 
@@ -87,6 +87,11 @@ Edit `apps/web/src/App.tsx` to tweak the chat shell.
 `servers/ggui/ggui.json` configures `ggui serve`. Set your default UI model,
 theme, declared blueprints + gadgets. See https://ggui.ai/docs/cli for the
 full reference.
+
+This repo currently pins ggui UI generation to OpenAI via
+`generation.model = "openai:gpt-5.5-2026-04-23"`. The agent backend under
+`servers/agent` is still the Claude Agent SDK variant, so it still needs its
+Claude credential until that backend is migrated separately.
 
 ### Blueprints — cache your common screens
 
