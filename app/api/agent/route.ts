@@ -14,7 +14,7 @@
 // A방식 안전 불변식(merchant 아님): 결제/정산/예약확정 문구 금지, product_links 는 표시 전용.
 
 import { NextResponse } from "next/server";
-import { validateAgentPayload } from "@/lib/host-create/agentPayload";
+import { validateAgentPayload, type HostCreateAgentPayload } from "@/lib/host-create/agentPayload";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -58,6 +58,19 @@ interface OpenAIChoice {
   message?: { content?: string };
 }
 
+interface MrtProduct {
+  title: string;
+  price_hint: string | null;
+  source_url: string | null;
+  image_url: string | null;
+  reason: string | null;
+}
+
+const MYREALTRIP_MCP_URL =
+  process.env.MYREALTRIP_MCP_URL?.trim() ||
+  process.env.GGUI_MYREALTRIP_MCP_URL?.trim() ||
+  "https://mcp-servers.myrealtrip.com/mcp";
+
 /** 코드펜스/잡텍스트가 섞여도 첫 { … 마지막 } 블록을 파싱 (json_object 면 보통 그대로 통과) */
 function extractJson(text: string): Record<string, unknown> | null {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -70,6 +83,197 @@ function extractJson(text: string): Record<string, unknown> | null {
   } catch {
     return null;
   }
+}
+
+function textIncludesAny(text: string, words: readonly string[]): boolean {
+  return words.some((word) => text.includes(word));
+}
+
+function buildTnaQueries(prompt: string, payload: HostCreateAgentPayload): string[] {
+  const source = [
+    prompt,
+    payload.title,
+    payload.concept,
+    payload.description,
+    payload.location_text,
+  ]
+    .filter((v): v is string => typeof v === "string")
+    .join(" ");
+
+  const cities = ["서울", "부산", "제주", "도쿄", "오사카", "교토", "후쿠오카", "발리", "방콕"];
+  const city = cities.find((c) => source.includes(c)) ?? "서울";
+  const queries = new Set<string>();
+
+  if (textIncludesAny(source, ["클래스", "워크숍", "체험", "만들", "쿠킹", "드로잉", "공방"])) {
+    queries.add(`${city} 클래스`);
+    queries.add(`${city} 체험`);
+  }
+  if (textIncludesAny(source, ["투어", "도슨트", "산책", "골목", "야경", "궁", "로컬"])) {
+    queries.add(`${city} 투어`);
+  }
+  if (textIncludesAny(source, ["액티비티", "러닝", "서핑", "아웃도어", "보트", "운동"])) {
+    queries.add(`${city} 액티비티`);
+  }
+
+  // 너무 긴 자연어는 searchTnas에서 0건이 잘 나므로, 마지막 안전망은 도시 단독 검색.
+  queries.add(city);
+  return Array.from(queries).slice(0, 4);
+}
+
+async function callMcpTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+  const res = await fetch(MYREALTRIP_MCP_URL, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: Date.now(),
+      method: "tools/call",
+      params: { name, arguments: args },
+    }),
+  });
+  if (!res.ok) throw new Error(`MyRealTrip MCP ${res.status}`);
+  return (await res.json()) as unknown;
+}
+
+function asRecord(v: unknown): Record<string, unknown> | null {
+  return v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : null;
+}
+
+function collectStrings(v: unknown, out: string[] = []): string[] {
+  if (typeof v === "string") out.push(v);
+  else if (Array.isArray(v)) v.forEach((item) => collectStrings(item, out));
+  else if (v && typeof v === "object") {
+    Object.values(v as Record<string, unknown>).forEach((item) => collectStrings(item, out));
+  }
+  return out;
+}
+
+function parseMrtProducts(raw: unknown): MrtProduct[] {
+  const root = asRecord(raw);
+  const content = root && asRecord(root.result)?.content;
+  const firstText = Array.isArray(content)
+    ? content
+        .map((item) => asRecord(item))
+        .find((item) => item?.type === "text" && typeof item.text === "string")?.text
+    : undefined;
+  if (typeof firstText !== "string") return [];
+
+  let widget: unknown;
+  try {
+    widget = JSON.parse(firstText).widget;
+  } catch {
+    return [];
+  }
+
+  const items = asRecord(widget)?.children;
+  if (!Array.isArray(items)) return [];
+
+  const nonProductLabels = new Set([
+    "ListView",
+    "ListViewItem",
+    "Box",
+    "Row",
+    "Col",
+    "Text",
+    "Image",
+    "Button",
+    "row",
+    "column",
+    "lg",
+    "xl",
+    "xs",
+    "sm",
+    "bold",
+    "medium",
+    "center",
+    "between",
+    "stretch",
+    "cover",
+    "primary",
+    "client",
+    "none",
+    "open_url",
+    "100%",
+    "이미지",
+    "예약하기",
+  ]);
+
+  const products: MrtProduct[] = [];
+  for (const item of items) {
+    const strings = collectStrings(item);
+    const title = strings.find(
+      (s) =>
+        s.length >= 3 &&
+        !nonProductLabels.has(s) &&
+        !s.startsWith("http") &&
+        !s.includes("예약하기") &&
+        !/^⭐/.test(s) &&
+        !/^[0-9,]+원~?$/.test(s) &&
+        !/^#[0-9A-Fa-f]{3,8}$/.test(s),
+    );
+    if (!title) continue;
+
+    const price = strings.find((s) => /^[0-9,]+원~?$/.test(s)) ?? null;
+    const url = strings.find((s) => /^https:\/\/(?:experiences\.)?myrealtrip\.com\//.test(s)) ?? null;
+    const image = strings.find((s) => /^https?:\/\/[^\s"']+\.(?:jpg|jpeg|png|webp)(?:\?[^\s"']*)?$/i.test(s)) ?? null;
+    if (!url) continue;
+
+    products.push({
+      title,
+      price_hint: price,
+      source_url: url,
+      image_url: image,
+      reason: "실제 MyRealTrip 검색 결과",
+    });
+    if (products.length >= 3) break;
+  }
+  return products;
+}
+
+async function searchMyRealTripProducts(
+  prompt: string,
+  payload: HostCreateAgentPayload,
+): Promise<MrtProduct[]> {
+  const seen = new Set<string>();
+  const out: MrtProduct[] = [];
+  for (const query of buildTnaQueries(prompt, payload)) {
+    try {
+      const raw = await callMcpTool("searchTnas", { query, page: 1, perPage: 5 });
+      for (const product of parseMrtProducts(raw)) {
+        const key = product.source_url ?? product.title;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(product);
+        if (out.length >= 3) return out;
+      }
+    } catch {
+      // MyRealTrip MCP는 보조 enrichment다. 실패해도 초안 생성 자체는 막지 않는다.
+    }
+  }
+  return out;
+}
+
+async function enrichWithRealProducts(
+  prompt: string,
+  payload: HostCreateAgentPayload,
+): Promise<HostCreateAgentPayload> {
+  const products = await searchMyRealTripProducts(prompt, payload);
+  if (products.length === 0) return payload;
+  return {
+    ...payload,
+    cover_image_url: payload.cover_image_url ?? products.find((p) => p.image_url)?.image_url ?? undefined,
+    product_links: products.map((p) => ({
+      title: p.title,
+      price_hint: p.price_hint,
+      source_url: p.source_url,
+      product_type: "tna" as const,
+      reason: p.reason,
+      caution: "예약은 판매처에서 개별 진행",
+    })),
+  };
 }
 
 export async function POST(req: Request) {
@@ -129,7 +333,10 @@ export async function POST(req: Request) {
   const text = data.choices?.[0]?.message?.content ?? "";
 
   const parsed = extractJson(text);
-  const payload = validateAgentPayload(parsed?.payload);
+  const payload = await enrichWithRealProducts(
+    prompt,
+    validateAgentPayload(parsed?.payload),
+  );
   const summary =
     typeof parsed?.summary === "string" && parsed.summary.trim().length > 0
       ? parsed.summary
