@@ -11,7 +11,6 @@
 // 토큰 클래스만 사용(하드코딩 hex 금지).
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import Link from "next/link";
 
 import { coverGradient } from "@/lib/cover";
 import type { ProposalStatus } from "@/lib/types";
@@ -190,7 +189,7 @@ function PilotCard({ pilot }: { pilot: PilotCardData }) {
   const href = fromDraft ? `/e/${slug}` : `/trips/${slug}`;
 
   return (
-    <Link
+    <a
       href={href}
       className="group block rounded-md focus-visible:outline-none"
     >
@@ -281,6 +280,6 @@ function PilotCard({ pilot }: { pilot: PilotCardData }) {
           </span>
         </div>
       </div>
-    </Link>
+    </a>
   );
 }

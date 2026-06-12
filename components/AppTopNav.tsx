@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Avatar from "@/components/ui/Avatar";
 import type { HostAuthContext } from "@/lib/auth/host";
 
@@ -25,7 +24,7 @@ export default function AppTopNav({ user, active = "discover" }: AppTopNavProps)
     <header className="w-full border-b border-surface-border bg-surface">
       <nav className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
         {/* 좌측 — 텍스트 워드마크 + Rausch 액센트 도트 (이미지 에셋 없음) */}
-        <Link
+        <a
           href="/"
           className="flex shrink-0 items-center gap-1.5 whitespace-nowrap text-h3 font-semibold text-ink"
           aria-label="OurRealTrip 홈"
@@ -35,14 +34,14 @@ export default function AppTopNav({ user, active = "discover" }: AppTopNavProps)
             className="inline-block size-2 rounded-pill bg-brand"
           />
           <span>OurRealTrip</span>
-        </Link>
+        </a>
 
         {/* 중앙 — 실제 라우트만 가진 네비 */}
         <div className="flex min-w-0 items-center justify-center gap-6 sm:gap-8">
           {navItems.map((item) => {
             const isActive = item.key === activeKey;
             return (
-              <Link
+              <a
                 key={item.key}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
@@ -51,7 +50,7 @@ export default function AppTopNav({ user, active = "discover" }: AppTopNavProps)
                 }`}
               >
                 {item.label}
-              </Link>
+              </a>
             );
           })}
         </div>
@@ -74,12 +73,12 @@ export default function AppTopNav({ user, active = "discover" }: AppTopNavProps)
               </span>
             </div>
           ) : (
-            <Link
+            <a
               href="/login"
               className="whitespace-nowrap rounded-pill border border-surface-border bg-surface px-4 py-2 text-label font-semibold text-ink transition hover:bg-surface-soft"
             >
               로그인
-            </Link>
+            </a>
           )}
         </div>
       </nav>

@@ -9,8 +9,6 @@
 //  - "N명 참여의향"만 표기(예약 오인 금지). 제3자 특가 강조 문구 미반영(중립화).
 //  - 커버 이미지 없으면 저채도 그라데이션 + 도시 이니셜(무지개 색 금지, DESIGN_BRIEF 13-8).
 
-import Link from "next/link";
-
 import { coverGradient, coverInitial } from "@/lib/cover";
 import type { ProposalStatus } from "@/lib/types";
 import type { TripCardData } from "@/lib/data/discover";
@@ -63,7 +61,7 @@ export default function TripCard({ trip }: TripCardProps) {
   const metaLine = [city, expectedDates].filter(Boolean).join(" · ");
 
   return (
-    <Link
+    <a
       href={`/trips/${slug}`}
       className="group block rounded-md focus-visible:outline-none"
     >
@@ -132,6 +130,6 @@ export default function TripCard({ trip }: TripCardProps) {
           </div>
         ) : null}
       </div>
-    </Link>
+    </a>
   );
 }
