@@ -9,9 +9,9 @@ interface AppTopNavProps {
 }
 
 // Airbnb 스타일 중앙 네비 — 실제 라우트만 남긴다(깨진 중복 탭 제거).
-//   탐색 → "/", 이벤트 등록하기 → "/host/create"
+//   탐색 → "/discover", 이벤트 등록하기 → "/host/create"
 const navItems = [
-  { href: "/", label: "탐색", key: "discover" },
+  { href: "/discover", label: "탐색", key: "discover" },
   { href: "/host/create", label: "이벤트 등록하기", key: "create" },
 ] as const;
 
